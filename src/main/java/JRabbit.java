@@ -17,7 +17,9 @@ public class JRabbit {
                 "Sending a message",
                 JOptionPane.PLAIN_MESSAGE);
 
-        send(message);
+        if (message != null && message.length() > 0) {
+            send(message);
+        }
     }
 
     private void send(String message) {
