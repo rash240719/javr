@@ -7,9 +7,11 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven { url "https://nexus.bedatadriven.com/content/groups/public" }
 }
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile 'com.rabbitmq:amqp-client:5.0.0'
+    compile "org.renjin:renjin-script-engine:0.8.2527";
 }
