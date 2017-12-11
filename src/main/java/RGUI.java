@@ -1,37 +1,9 @@
-import org.renjin.script.RenjinScriptEngineFactory;
 import org.renjin.sexp.SEXP;
-import org.renjin.sexp.Vector;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import javax.swing.*;
 import java.awt.*;
-import java.io.FileNotFoundException;
 
-public class R {
-    public SEXP executeScript(String script, Object[] args) {
-        RenjinScriptEngineFactory factory = new RenjinScriptEngineFactory();
-        ScriptEngine engine = factory.getScriptEngine();
-        String dir = System.getProperty("user.dir") + "/src/main/resources/";
-
-        try {
-            int i = 0;
-
-            for (Object o : args) {
-                engine.put("val" + i, o);
-                i++;
-            }
-
-            return (SEXP) engine.eval(new java.io.FileReader(dir + script + ".r"));
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
+public class RGUI extends R {
     public void openOperationsDialog() {
         String[] options = {"Addition",
                 "Subtraction",
