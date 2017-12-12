@@ -1,26 +1,11 @@
 import com.rabbitmq.client.*;
 
-import javax.swing.*;
-import java.awt.*;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 
 public class JRabbit {
     private final static String QUEUE_NAME = "testing";
 
-    public void openSendDialog() {
-        String message = (String) JOptionPane.showInputDialog(
-                new Frame(),
-                "Input your message:\n",
-                "Sending a message",
-                JOptionPane.PLAIN_MESSAGE);
-
-        send(message);
-    }
-
-    private void send(String message) {
+    protected void send(String message) {
         ConnectionFactory factory;
         Connection connection;
         Channel channel;
@@ -40,7 +25,7 @@ public class JRabbit {
         }
     }
 
-    public void printReceivedMessages() {
+    protected void receive(java.util.function.Consumer<String> handler) {
         ConnectionFactory factory;
         Connection connection;
         Channel channel;
@@ -54,21 +39,29 @@ public class JRabbit {
             channel.queueDeclare(QUEUE_NAME, false, false, false, null);
             System.out.println("Awaiting messages");
 
-            Consumer consumer = new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
-                    try {
-                        String message = new String(body, "UTF-8");
-                        System.out.println(" [x] Received '" + message + "'");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
+            Consumer consumer = createConsumer(channel, handler);
 
-            channel.basicConsume(QUEUE_NAME, true, consumer);
+            while (true) {
+                channel.basicConsume(QUEUE_NAME, true, consumer);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private Consumer createConsumer(Channel channel, java.util.function.Consumer<String> handler) {
+        Consumer consumer = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
+                try {
+                    String message = new String(body, "UTF-8");
+                    handler.accept(message);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        return consumer;
     }
 }
