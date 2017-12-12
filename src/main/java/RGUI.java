@@ -4,6 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class RGUI extends R {
+    public void sayHello(String script) {
+        super.executeScript(script, null);
+    }
+
     public void openOperationsDialog() {
         String[] options = {"Addition",
                 "Subtraction",
@@ -83,7 +87,7 @@ public class RGUI extends R {
         SEXP result = null;
 
         try {
-            result = (SEXP) executeScript(operation, values);
+            result = (SEXP) super.executeScript(operation, values);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
