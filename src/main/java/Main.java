@@ -4,7 +4,7 @@ import java.awt.*;
 public class Main {
     public static void main(String... args) {
         try {
-            JRabbit jRabbit = new JRabbit();
+            JRabbitGUI jRabbitGUI = new JRabbitGUI();
             String[] options = {"Send",
                     "Receive",
                     "Say hello from r script",
@@ -13,7 +13,7 @@ public class Main {
             int choice = 0;
             RGUI rgui = new RGUI();
 
-            while (choice != options.length - 1) {
+            while (choice != options.length - 1 && choice != -1) {
                 choice = JOptionPane.showOptionDialog(new Frame(),
                         "What will we do today :D ?",
                         "JRabbit",
@@ -26,17 +26,17 @@ public class Main {
                 switch (choice) {
                     case 0:
                         System.out.println("You chose " + options[choice]);
-                        jRabbit.openSendDialog();
+                        jRabbitGUI.openSendDialog();
                         break;
 
                     case 1:
                         System.out.println("You chose " + options[choice]);
-                        jRabbit.printReceivedMessages();
+                        jRabbitGUI.printReceivedMessages();
                         break;
 
                     case 2:
                         System.out.println("You chose " + options[choice]);
-                        rgui.executeScript("Hello", null);
+                        rgui.sayHello("Hello");
                         break;
 
                     case 3:
@@ -45,7 +45,7 @@ public class Main {
                         break;
 
                     default:
-                        System.out.println("You chose " + options[choice]);
+                        if (choice != -1) System.out.println("You chose " + options[choice]);
                         System.out.println("Good night");
                         break;
                 }
