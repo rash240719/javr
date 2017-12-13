@@ -5,7 +5,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.io.FileNotFoundException;
 
-public class RIntermediate extends R {
+public class RIntermediary extends R {
     protected SEXP operate(String operation, Object[] values) {
         SEXP result = null;
 
