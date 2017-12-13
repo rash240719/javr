@@ -3,7 +3,7 @@ import org.renjin.sexp.SEXP;
 import javax.swing.*;
 import java.awt.*;
 
-public class RGUI extends R {
+public class RGUI extends RIntermediary {
     public void sayHello(String script) {
         super.executeScript(script, null);
     }
@@ -54,7 +54,7 @@ public class RGUI extends R {
         }
     }
 
-    private Object[] openBinaryOperationDialog() {
+    public Object[] openBinaryOperationDialog() {
         Object[] values = new Object[2];
 
         try {
@@ -73,25 +73,28 @@ public class RGUI extends R {
                             JOptionPane.PLAIN_MESSAGE));
         } catch (Exception e) {
             e.printStackTrace();
+
+            values = null;
         } finally {
             return values;
         }
     }
 
-    private void showResult(SEXP result) {
-        JOptionPane.showMessageDialog(new Frame(), "Your result is " + result);
+    public void showResult(SEXP result) {
+        if (result == null) {
+            JOptionPane.showMessageDialog(new Frame(), "Your input is incorrect");
+        } else {
+            JOptionPane.showMessageDialog(new Frame(), "Your result is " + result);
+        }
     }
 
     private SEXP operate(String operation) {
         Object[] values = openBinaryOperationDialog();
-        SEXP result = null;
 
-        try {
-            result = (SEXP) super.executeScript(operation, values);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            return result;
+        if (values == null) {
+            return null;
+        } else {
+            return super.operate(operation, values);
         }
     }
 
