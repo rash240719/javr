@@ -46,7 +46,7 @@ public class GUI {
     public void showLocalMenu() {
         try {
             JRabbitGUI jRabbitGUI = new JRabbitGUI();
-            jRabbitGUI.connectRemote();
+            jRabbitGUI.connectRemote("testing");
             String[] options = {"Send",
                     "Receive",
                     "Say hello from r script",
@@ -99,7 +99,6 @@ public class GUI {
     public void showDistributedMenu() {
         try {
             JRabbitGUI jRabbitGUI = new JRabbitGUI();
-            jRabbitGUI.connectRemote();
             String[] options = {"Operate Arithmetic",
                     "Receive operations",
                     "Go back"};
