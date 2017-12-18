@@ -6,6 +6,7 @@ public class GUI {
         try {
             String[] options = {"Local version",
                     "Distributed version",
+                    "S3 version",
                     "Sleep -.-zzz"};
             int choice = 0;
 
@@ -30,6 +31,11 @@ public class GUI {
                         showDistributedMenu();
                         break;
 
+                    case 2:
+                        System.out.println("You chose " + options[choice]);
+                        showS3Menu();
+                        break;
+
                     default:
                         if (choice != -1) System.out.println("You chose " + options[choice]);
                         System.out.println("Good night");
@@ -51,9 +57,13 @@ public class GUI {
                     "Receive",
                     "Say hello from r script",
                     "Operate Arithmetic",
+                    "Send file",
+                    "Download file",
                     "Go back"};
             int choice = 0;
             RGUI rgui = new RGUI();
+            S3 s3 = new S3();
+            String filename;
 
             while (choice != options.length - 1 && choice != -1) {
                 choice = JOptionPane.showOptionDialog(new Frame(),
@@ -84,6 +94,29 @@ public class GUI {
                     case 3:
                         System.out.println("You chose " + options[choice]);
                         rgui.openOperationsDialog();
+                        break;
+
+                    case 4:
+                        System.out.println("You chose " + options[choice]);
+                        filename = JOptionPane.showInputDialog(
+                                new Frame(),
+                                "Input your filename:\n",
+                                "Uploading a file",
+                                JOptionPane.PLAIN_MESSAGE);
+                        if (!filename.isEmpty()) s3.uploadFile(filename);
+                        break;
+
+                    case 5:
+                        System.out.println("You chose " + options[choice]);
+                        filename = JOptionPane.showInputDialog(
+                                new Frame(),
+                                "Input your filename:\n",
+                                "Downloading a file",
+                                JOptionPane.PLAIN_MESSAGE);
+                        if (!filename.isEmpty()) {
+                            String content = s3.downloadFile(filename);
+                            s3.writeFile(filename, content);
+                        }
                         break;
 
                     default:
@@ -123,6 +156,48 @@ public class GUI {
                     case 1:
                         System.out.println("You chose " + options[choice]);
                         jRabbitGUI.receiveOperations();
+                        break;
+
+                    default:
+                        if (choice != -1) System.out.println("You chose " + options[choice]);
+                        break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void showS3Menu() {
+        try {
+            S3 s3 = new S3();
+            /*String[] options = {"Operate Arithmetic",
+                    "Receive operations",
+                    "Go back"};*/
+            String[] options = {"Send file",
+                    "Go back"};
+            int choice = 0;
+
+            while (choice != options.length - 1 && choice != -1) {
+                choice = JOptionPane.showOptionDialog(new Frame(),
+                        "What will we do today :D ?",
+                        "S3 Version Menu",
+                        JOptionPane.YES_NO_CANCEL_OPTION,
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        options,
+                        options[options.length - 1]);
+
+                switch (choice) {
+                    case 0:
+                        System.out.println("You chose " + options[choice]);
+                        s3.uploadFile("tamalongo");
+                        break;
+
+                    case 1:
+                        System.out.println("You chose " + options[choice]);
+                        //jRabbitGUI.receiveOperations();
+                        System.out.println("Work in progress :D");
                         break;
 
                     default:
