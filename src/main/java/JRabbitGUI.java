@@ -5,6 +5,7 @@ import java.awt.*;
 import java.util.concurrent.CompletableFuture;
 
 public class JRabbitGUI extends JRabbit {
+
     public void openSendDialog() {
         String message = (String) JOptionPane.showInputDialog(
                 new Frame(),
@@ -13,17 +14,20 @@ public class JRabbitGUI extends JRabbit {
                 JOptionPane.PLAIN_MESSAGE);
 
         if (message != null && message.length() > 0) {
-            send(message);
+            send(message, (String sent) -> {
+                System.out.println(" [x] Sent message: '" + sent + "'");
+            });
         }
     }
 
     public void printReceivedMessages() {
-        super.receive((String message) -> {
-            System.out.printf(" [x] Received '%s'%n", message);
+        super.receive((String received) -> {
+            System.out.printf(" [x] Received '%s'%n", received);
         });
     }
 
     public void openOperationSelectionDialog() {
+        connectRemote("operations");
         String[] options = {"Addition",
                 "Subtraction",
                 "Product",
@@ -75,10 +79,13 @@ public class JRabbitGUI extends JRabbit {
     public void openSendOperationDialog(char operator) {
         RGUI rgui = new RGUI();
         Object[] values = rgui.openBinaryOperationDialog();
+        connectRemote("operations");
+        JRabbit results_connection = new JRabbit();
+        results_connection.connectRemote("results");
 
         if (values != null) {
             sendOperation(values, operator);
-            receiveResults();
+            results_connection.receiveResults();
         }
     }
 }

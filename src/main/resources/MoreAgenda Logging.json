@@ -1,0 +1,115 @@
+User: {
+	1xxx
+	add: 11xx
+		Successful 1101
+		Unsuccessful 1102
+		Invalid 111x
+			Name 1111
+			Email 1112
+			Telephone 1113
+			Password 1114
+		Existing 1107
+
+	edit: 12xx
+		Successful 1201
+		Unsuccessful 1202
+		Invalid 121x
+			Name 1211
+			Email 1212
+			Telephone 1213
+			Password 1214
+		Existing 1207
+		
+	get: 13xx
+		Successful 1301
+		No such user 1302
+		
+	getAll: 14xx
+		Successful 1401
+		No registries 1402
+
+	logIn: 15xx
+		Successful 1501
+		No such user 1502
+		Unsuccessful 1503
+
+	logOut: 16xx
+		Successful 1601
+		Unsuccessful 1602
+
+	associateMembership: 17xx
+		Successful 1701
+		No such user 1702
+		Unsuccessful 1703
+
+	updateHours: NO LOGS
+
+	requestPasswordReset: 18xx
+		Successful 1801
+		No such user 1802
+		Invalid 1803
+
+	resetPassword: 19xx
+		Successful 1901
+		No such user 1902
+		Invalid 191x
+			Passwords 1911
+			Unequal Password 1912
+}
+
+Reservation: 1xxx
+	add: 11xx
+		Successful 1101
+		Unsuccessful 1102
+		Invalid 111x
+			Name 1111
+			Email 1112
+			Telephone 1113
+			Password 1114
+		Existing 1107
+
+	edit: 12xx
+		Successful 1201
+		Unsuccessful 1202
+		Invalid 121x
+			Name 1211
+			Email 1212
+			Telephone 1213
+			Password 1214
+		Existing 1207
+		
+	get: 13xx
+		Successful 1301
+		No such user 1302
+		
+	getAll: 14xx
+		Successful 1401
+		No registries 1402
+
+	logIn: 15xx
+		Successful 1501
+		No such user 1502
+		Unsuccessful 1503
+
+	logOut: 16xx
+		Successful 1601
+		Unsuccessful 1602
+
+	associateMembership: 17xx
+		Successful 1701
+		No such user 1702
+		Unsuccessful 1703
+
+	updateHours: NO LOGS
+
+	requestPasswordReset: 18xx
+		Successful 1801
+		No such user 1802
+		Invalid 1803
+
+	resetPassword: 19xx
+		Successful 1901
+		No such user 1902
+		Invalid 191x
+			Passwords 1911
+			Unequal Password 1912

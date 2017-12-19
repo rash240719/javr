@@ -5,15 +5,16 @@ import org.renjin.sexp.SEXP;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URI;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public class JRabbit {
-    private final static String QUEUE_NAME = "testing";
+    private String QUEUE_NAME;
     private ConnectionFactory factory;
     private Connection connection;
     private Channel channel;
 
-    public void connectRemote() {
+    public void connectRemote(String QUEUE_NAME) {
+        this.QUEUE_NAME = QUEUE_NAME;
         factory = new ConnectionFactory();
         try {
             factory.setUri(new URI("amqp://bbofzllq:aYr9P_WTYo7SmwLj6fuzfedosZ-4jFfG@elephant.rmq.cloudamqp.com/bbofzllq"));
@@ -26,19 +27,10 @@ public class JRabbit {
         }
     }
 
-    protected void send(String message) {
-        ConnectionFactory factory;
-        Connection connection;
-        Channel channel;
-
+    protected void send(String message, Consumer<String> handler) {
         try {
-            factory = new ConnectionFactory();
-            factory.setUri(new URI("amqp://bbofzllq:aYr9P_WTYo7SmwLj6fuzfedosZ-4jFfG@elephant.rmq.cloudamqp.com/bbofzllq"));
-            connection = factory.newConnection();
-            channel = connection.createChannel();
-            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
             channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-            System.out.println(" [x] Sent '" + message + "'");
+            handler.accept(message);
             channel.close();
             connection.close();
         } catch (Exception e) {
@@ -46,7 +38,16 @@ public class JRabbit {
         }
     }
 
-    protected void receive(java.util.function.Consumer<String> handler) {
+    protected void sendWithoutClosing(String message, Consumer<String> handler) {
+        try {
+            channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+            handler.accept(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void receive(Consumer<String> handler) {
         try {
             System.out.println("Awaiting messages");
 
@@ -63,19 +64,15 @@ public class JRabbit {
         }
     }
 
-    protected void receiveOnce(Function<String, Boolean> handler) {
+    protected void receiveOnce(Consumer<String> handler) {
         try {
             System.out.println("Awaiting messages");
-            boolean doCycle = true;
+            GetResponse response = channel.basicGet(QUEUE_NAME, true);
 
-            while (doCycle) {
-                GetResponse response = channel.basicGet(QUEUE_NAME, true);
+            if (response != null) {
+                String message = new String(response.getBody(), "UTF-8");
 
-                if (response != null) {
-                    String message = new String(response.getBody(), "UTF-8");
-
-                    doCycle = handler.apply(message);
-                }
+                handler.accept(message);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -93,85 +90,83 @@ public class JRabbit {
 
         String json = gson.toJson(operation, Operation.class);
 
-        send(json);
+        send(json, (String sent) -> {
+            System.out.println(" [x] Sent operation: '" + sent + "'");
+        });
     }
 
     public void receiveOperations() {
-        receive((String json) -> {
-            if (!json.contains("result")) {
-                System.out.printf(" [x] Received operation: '%s'%n", json);
+        connectRemote("operations");
+        JRabbit results_connection = new JRabbit();
+        results_connection.connectRemote("results");
+        receive((String received) -> {
+            System.out.printf(" [x] Received operation: '%s'%n", received);
 
-                RIntermediary r = new RIntermediary();
-                Gson gson = new Gson();
-                Operation operation = gson.fromJson(json, Operation.class);
+            RIntermediary r = new RIntermediary();
+            Gson gson = new Gson();
+            Operation operation = gson.fromJson(received, Operation.class);
 
-                if (operation.getResult() == null) {
-                    Object[] values = {operation.getX(), operation.getY()};
-                    SEXP result;
+            Object[] values = {operation.getX(), operation.getY()};
+            SEXP result;
 
-                    switch (operation.getOperator()) {
-                        case '+':
-                            result = r.operate("Addition", values);
-                            break;
+            switch (operation.getOperator()) {
+                case '+':
+                    result = r.operate("Addition", values);
+                    break;
 
-                        case '-':
-                            result = r.operate("Subtraction", values);
-                            break;
+                case '-':
+                    result = r.operate("Subtraction", values);
+                    break;
 
-                        case '*':
-                            result = r.operate("Product", values);
-                            break;
+                case '*':
+                    result = r.operate("Product", values);
+                    break;
 
-                        case '/':
-                            result = r.operate("Division", values);
-                            break;
+                case '/':
+                    result = r.operate("Division", values);
+                    break;
 
-                        default:
-                            System.out.println("No such operation");
-                            result = null;
-                            break;
-                    }
-
-                    operation.setResult(Double.parseDouble(String.valueOf(result)));
-
-                    String result_json = gson.toJson(operation, Operation.class);
-
-                    send(result_json);
-                }
+                default:
+                    System.out.println("No such operation");
+                    result = null;
+                    break;
             }
+
+            operation.setResult(Double.parseDouble(String.valueOf(result)));
+
+            String result_json = gson.toJson(operation, Operation.class);
+
+            results_connection.sendWithoutClosing(result_json, (String sent) -> {
+                System.out.println(" [x] Sent result: '" + sent + "'");
+            });
         });
     }
 
     public void receiveResults() {
-        receiveOnce((String json) -> {
+        connectRemote("results");
+        receiveOnce((String received) -> {
             Operation operation;
 
-            if (json.contains("result")) {
-                System.out.printf(" [x] Received result: '%s'%n", json);
+            System.out.printf(" [x] Received result: '%s'%n", received);
 
-                RIntermediary r = new RIntermediary();
-                Gson gson = new Gson();
-                operation = gson.fromJson(json, Operation.class);
-                String message = "";
+            RIntermediary r = new RIntermediary();
+            Gson gson = new Gson();
+            operation = gson.fromJson(received, Operation.class);
+            String message = "";
 
-                message += operation.getX();
-                message += " ";
-                message += operation.getOperator();
-                message += " ";
-                message += operation.getY();
-                message += " = ";
-                message += operation.getResult();
+            message += operation.getX();
+            message += " ";
+            message += operation.getOperator();
+            message += " ";
+            message += operation.getY();
+            message += " = ";
+            message += operation.getResult();
 
-                JOptionPane.showMessageDialog(new Frame(), message);
-
-                return false;
-            } else {
-                return true;
-            }
+            JOptionPane.showMessageDialog(new Frame(), message);
         });
     }
 
-    public static String getQueueName() {
+    public String getQueueName() {
         return QUEUE_NAME;
     }
 
