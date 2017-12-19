@@ -100,7 +100,7 @@ public class GUI {
                         System.out.println("You chose " + options[choice]);
                         filename = JOptionPane.showInputDialog(
                                 new Frame(),
-                                "Input your filename:\n",
+                                "Input your filename with extension:\n",
                                 "Uploading a file",
                                 JOptionPane.PLAIN_MESSAGE);
                         if (!filename.isEmpty()) s3.uploadFile(filename);
@@ -110,13 +110,10 @@ public class GUI {
                         System.out.println("You chose " + options[choice]);
                         filename = JOptionPane.showInputDialog(
                                 new Frame(),
-                                "Input your filename:\n",
+                                "Input your filename with extension:\n",
                                 "Downloading a file",
                                 JOptionPane.PLAIN_MESSAGE);
-                        if (!filename.isEmpty()) {
-                            String content = s3.downloadFile(filename);
-                            s3.writeFile(filename, content);
-                        }
+                        s3.downloadAndWriteFile(filename);
                         break;
 
                     default:
