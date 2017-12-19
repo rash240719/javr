@@ -2,13 +2,14 @@ import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.util.IOUtils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class S3 {
-    AmazonS3 client;
-    private static String bucketname;
+    private AmazonS3 client;
+    private String bucketname;
 
     public S3() {
         bucketname = "bucket.sandbox.getmore.mx";
@@ -24,7 +25,6 @@ public class S3 {
 
     public void uploadFile(String filename) {
         try {
-            filename += ".txt";
             File file = new File(getClass().getClassLoader().getResource(filename).toURI());
             if (!file.exists()) throw new FileNotFoundException();
 
@@ -34,37 +34,56 @@ public class S3 {
         }
     }
 
-    public String downloadFile(String filename) {
-        String content = "";
+    public InputStream downloadFile(String filename) {
+        InputStream inputStream = null;
 
         try {
-            filename += ".txt";
-            S3Object object = client.getObject(bucketname, filename);
-            InputStream objectData = object.getObjectContent();
-
-            content = stringifyInputStream(objectData);
-            objectData.close();
-
-            File file = new File(getClass().getClassLoader().getResource(filename).toURI());
-            if (!file.exists()) throw new FileNotFoundException();
-
-            client.putObject(bucketname, filename, file);
+            inputStream = client.getObject(bucketname, filename).getObjectContent();
         } catch (Exception e) {
-            content = null;
             e.printStackTrace();
+            inputStream = null;
         } finally {
-            return content;
+            return inputStream;
         }
     }
 
-    public void writeFile(String filename, String content) {
-        try {
-            filename += ".txt";
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true));
+    public String downloadFileAsString(String filename) {
+        return stringifyInputStream(downloadFile(filename));
+    }
 
-            writer.append(' ');
-            writer.append(content);
-            writer.close();
+    public void writeFile(String filename, InputStream content) {
+        File file = new File(filename);
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+            if (content != null) {
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+
+                byte[] contentInBytes = IOUtils.toByteArray(content);
+                fileOutputStream.write(contentInBytes);
+                fileOutputStream.flush();
+                fileOutputStream.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void downloadAndWriteFile(String filename) {
+        try {
+            if (!filename.isEmpty()) {
+                writeFile(filename, downloadFile(filename));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeFileFromString(String filename, String content) {
+        try {
+            InputStream inputStream = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8.name()));
+            writeFile(filename, inputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -92,5 +111,21 @@ public class S3 {
         } finally {
             return content;
         }
+    }
+
+    public AmazonS3 getClient() {
+        return client;
+    }
+
+    public void setClient(AmazonS3 client) {
+        this.client = client;
+    }
+
+    public String getBucketname() {
+        return bucketname;
+    }
+
+    public void setBucketname(String bucketname) {
+        this.bucketname = bucketname;
     }
 }
