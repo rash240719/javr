@@ -1,13 +1,12 @@
-import org.renjin.sexp.SEXP;
-
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class JRabbitGUI extends JRabbit {
 
     public void openSendDialog() {
-        String message = (String) JOptionPane.showInputDialog(
+        String message = JOptionPane.showInputDialog(
                 new Frame(),
                 "Input your message:\n",
                 "Sending a message",
@@ -27,6 +26,10 @@ public class JRabbitGUI extends JRabbit {
     }
 
     public void openOperationSelectionDialog() {
+        openOperationSelectionDialog(this::openSendOperationDialog);
+    }
+
+    public void openOperationSelectionDialog(Consumer<Character> handler) {
         connectRemote("operations");
         String[] options = {"Addition",
                 "Subtraction",
@@ -36,44 +39,57 @@ public class JRabbitGUI extends JRabbit {
         int choice = 0;
 
         while (choice != options.length - 1) {
-            choice = JOptionPane.showOptionDialog(new Frame(),
-                    "What operation will we do today :D ?",
-                    "Operation selection",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    options,
-                    options[options.length - 1]);
             char operator = ' ';
+            ArrayList choiceResults = getChoice(options, choice);
+            choice = (int) choiceResults.get(0);
+            operator = (char) choiceResults.get(1);
 
-            switch (choice) {
-                case 0:
-                    System.out.println("You chose " + options[choice]);
-                    operator = '+';
-                    break;
-
-                case 1:
-                    System.out.println("You chose " + options[choice]);
-                    operator = '-';
-                    break;
-
-                case 2:
-                    System.out.println("You chose " + options[choice]);
-                    operator = '*';
-                    break;
-
-                case 3:
-                    System.out.println("You chose " + options[choice]);
-                    operator = '/';
-                    break;
-
-                default:
-                    System.out.println("You chose " + options[choice]);
-                    break;
-            }
-
-            if (choice < options.length - 1) openSendOperationDialog(operator);
+            if (choice < options.length - 1) handler.accept(operator);
         }
+    }
+
+    public ArrayList getChoice(String[] options, int choice) {
+        ArrayList list = new ArrayList();
+        choice = JOptionPane.showOptionDialog(new Frame(),
+                "What operation will we do today :D ?",
+                "Operation selection",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[options.length - 1]);
+        char operator = ' ';
+
+        switch (choice) {
+            case 0:
+                System.out.println("You chose " + options[choice]);
+                operator = '+';
+                break;
+
+            case 1:
+                System.out.println("You chose " + options[choice]);
+                operator = '-';
+                break;
+
+            case 2:
+                System.out.println("You chose " + options[choice]);
+                operator = '*';
+                break;
+
+            case 3:
+                System.out.println("You chose " + options[choice]);
+                operator = '/';
+                break;
+
+            default:
+                System.out.println("You chose " + options[choice]);
+                break;
+        }
+
+        list.add(choice);
+        list.add(operator);
+
+        return list;
     }
 
     public void openSendOperationDialog(char operator) {
