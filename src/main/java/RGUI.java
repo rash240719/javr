@@ -54,7 +54,7 @@ public class RGUI extends RIntermediary {
         }
     }
 
-    public Object[] openBinaryOperationDialog() {
+    public static Object[] openBinaryOperationDialog() {
         Object[] values = new Object[2];
 
         try {
@@ -88,7 +88,7 @@ public class RGUI extends RIntermediary {
         }
     }
 
-    private SEXP operate(String operation) {
+    protected SEXP operate(String operation) {
         Object[] values = openBinaryOperationDialog();
 
         if (values == null) {
