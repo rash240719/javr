@@ -1,91 +1,112 @@
+import com.google.gson.Gson;
 import org.renjin.sexp.SEXP;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.CompletableFuture;
 
-public class JRabbitGUI extends JRabbit {
+public class S3GUI extends S3 {
 
-    public void openSendDialog() {
-        String message = JOptionPane.showInputDialog(
-                new Frame(),
-                "Input your message:\n",
-                "Sending a message",
-                JOptionPane.PLAIN_MESSAGE);
-
-        if (message != null && message.length() > 0) {
-            send(message, (String sent) -> {
-                System.out.println(" [x] Sent message: '" + sent + "'");
-            });
-        }
-    }
-
-    public void printReceivedMessages() {
-        super.receive((String received) -> {
-            System.out.printf(" [x] Received '%s'%n", received);
+    public void openOperationSelectionDialog() {
+        new JRabbitGUI().openOperationSelectionDialog(operator -> {
+            openUploadOperationDialog(operator);
         });
     }
 
-    public void openOperationSelectionDialog() {
-        connectRemote("operations");
-        String[] options = {"Addition",
-                "Subtraction",
-                "Product",
-                "Division",
-                "Go back"};
-        int choice = 0;
+    public void openUploadOperationDialog(char operator) {
+        Object[] values = new RGUI().openBinaryOperationDialog();
+        JRabbitGUI operationsJRabbitGUI = new JRabbitGUI();
+        operationsJRabbitGUI.connectRemote("operations");
 
-        while (choice != options.length - 1) {
-            choice = JOptionPane.showOptionDialog(new Frame(),
-                    "What operation will we do today :D ?",
-                    "Operation selection",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    options,
-                    options[options.length - 1]);
-            char operator = ' ';
-
-            switch (choice) {
-                case 0:
-                    System.out.println("You chose " + options[choice]);
-                    operator = '+';
-                    break;
-
-                case 1:
-                    System.out.println("You chose " + options[choice]);
-                    operator = '-';
-                    break;
-
-                case 2:
-                    System.out.println("You chose " + options[choice]);
-                    operator = '*';
-                    break;
-
-                case 3:
-                    System.out.println("You chose " + options[choice]);
-                    operator = '/';
-                    break;
-
-                default:
-                    System.out.println("You chose " + options[choice]);
-                    break;
-            }
-
-            if (choice < options.length - 1) openSendOperationDialog(operator);
+        if (values != null) {
+            operationsJRabbitGUI.sendOperation(values, operator);
+            receiveResults();
         }
     }
 
-    public void openSendOperationDialog(char operator) {
-        RGUI rgui = new RGUI();
-        Object[] values = rgui.openBinaryOperationDialog();
-        connectRemote("operations");
-        JRabbit results_connection = new JRabbit();
-        results_connection.connectRemote("results");
+    public void receiveOperations() {
+        JRabbitGUI operationsJRabbitGUI = new JRabbitGUI();
+        operationsJRabbitGUI.connectRemote("operations");
+        JRabbitGUI resultsJRabbitGUI = new JRabbitGUI();
+        resultsJRabbitGUI.connectRemote("results");
+        operationsJRabbitGUI.receive((String received) -> {
+            System.out.printf(" [x] Received operation: '%s'%n", received);
 
-        if (values != null) {
-            sendOperation(values, operator);
-            results_connection.receiveResults();
-        }
+            RIntermediary r = new RIntermediary();
+            Gson gson = new Gson();
+            Operation operation = gson.fromJson(received, Operation.class);
+
+            Object[] values = {operation.getX(), operation.getY()};
+            SEXP result;
+
+            switch (operation.getOperator()) {
+                case '+':
+                    result = r.operate("Addition", values);
+                    break;
+
+                case '-':
+                    result = r.operate("Subtraction", values);
+                    break;
+
+                case '*':
+                    result = r.operate("Product", values);
+                    break;
+
+                case '/':
+                    result = r.operate("Division", values);
+                    break;
+
+                default:
+                    System.out.println("No such operation");
+                    result = null;
+                    break;
+            }
+
+            String filename = "results/result-" + System.currentTimeMillis();
+            writeFileFromString(filename, String.valueOf(result));
+            uploadFile(filename);
+            deleteFile(filename);
+            operation.setResult(filename);
+
+            String result_json = gson.toJson(operation, Operation.class);
+
+            resultsJRabbitGUI.sendWithoutClosing(result_json, (String sent) -> {
+                System.out.println(" [x] Uploaded result: '" + sent + "'");
+            });
+        });
+    }
+
+    public void receiveResults() {
+        JRabbitGUI jRabbitGUI = new JRabbitGUI();
+        jRabbitGUI.connectRemote("results");
+        jRabbitGUI.receiveOnce((String received) -> {
+            Operation operation;
+
+            System.out.printf(" [x] Downloaded result: '%s'%n", received);
+
+            RIntermediary r = new RIntermediary();
+            Gson gson = new Gson();
+            operation = gson.fromJson(received, Operation.class);
+            String message = "";
+
+            message += operation.getX();
+            message += " ";
+            message += operation.getOperator();
+            message += " ";
+            message += operation.getY();
+            message += " = ";
+
+            boolean downloaded = false;
+
+            while (!downloaded) {
+                try {
+                    message += downloadFileAsString(String.valueOf(operation.getResult()));
+                    downloaded = true;
+                } catch (Exception e) {
+                    downloaded = false;
+                }
+            }
+
+            JOptionPane.showMessageDialog(new Frame(), message);
+        });
     }
 }
