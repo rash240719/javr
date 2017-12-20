@@ -19,15 +19,24 @@ public class S3 {
                 .build();
     }
 
-    S3(String bucketname, String keyname) {
+    S3(String bucketname) {
         this.bucketname = bucketname;
+    }
+
+    public void deleteFile(String filename) {
+        try {
+            File file = new File(System.getProperty("user.dir") + "/" + filename);
+            if (!file.exists()) throw new FileNotFoundException();
+            file.delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void uploadFile(String filename) {
         try {
-            File file = new File(getClass().getClassLoader().getResource(filename).toURI());
+            File file = new File(System.getProperty("user.dir") + "/" + filename);
             if (!file.exists()) throw new FileNotFoundException();
-
             client.putObject(bucketname, filename, file);
         } catch (Exception e) {
             e.printStackTrace();
@@ -52,7 +61,7 @@ public class S3 {
     }
 
     public void writeFile(String filename, InputStream content) {
-        File file = new File(filename);
+        File file = new File(System.getProperty("user.dir") + "/" + filename);
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
             if (content != null) {
