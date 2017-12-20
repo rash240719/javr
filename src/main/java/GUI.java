@@ -167,18 +167,16 @@ public class GUI {
 
     public void showS3Menu() {
         try {
-            S3 s3 = new S3();
-            /*String[] options = {"Operate Arithmetic",
+            S3GUI s3GUI = new S3GUI();
+            String[] options = {"Operate Arithmetic",
                     "Receive operations",
-                    "Go back"};*/
-            String[] options = {"Send file",
                     "Go back"};
             int choice = 0;
 
             while (choice != options.length - 1 && choice != -1) {
                 choice = JOptionPane.showOptionDialog(new Frame(),
                         "What will we do today :D ?",
-                        "S3 Version Menu",
+                        "Distributed Version Menu",
                         JOptionPane.YES_NO_CANCEL_OPTION,
                         JOptionPane.QUESTION_MESSAGE,
                         null,
@@ -188,13 +186,12 @@ public class GUI {
                 switch (choice) {
                     case 0:
                         System.out.println("You chose " + options[choice]);
-                        s3.uploadFile("tamalongo");
+                        s3GUI.openOperationSelectionDialog();
                         break;
 
                     case 1:
                         System.out.println("You chose " + options[choice]);
-                        //jRabbitGUI.receiveOperations();
-                        System.out.println("Work in progress :D");
+                        s3GUI.receiveOperations();
                         break;
 
                     default:
